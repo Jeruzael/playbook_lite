@@ -34,17 +34,18 @@
 
           <div class="muted" style="margin-top: 10px;">
             Capacity: {{ s.capacity }}
+             <span id="seat-{{ s.id }}" class="muted"></span>
           </div>
 
-          <!-- Registration button comes in Phase 3 -->
-          <div style="margin-top: 12px;">
+          <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap;">
             {% if s.start_at > now %}
-            <a class="btn" href="{% url 'core:register_for_session' s.id %}">Register</a>
+              <a class="btn" href="{% url 'core:register_for_session' s.id %}">Register</a>
             {% else %}
-            <span class="btn" style="opacity:0.7; cursor:not-allowed;">Registration closed</span>
+              <span class="btn" style="opacity:0.7; cursor:not-allowed;">Registration closed</span>
             {% endif %}
-          </div>
 
+            <button class="btn" type="button" onclick="checkSeats({{ s.id }})">Check seats</button>
+          </div>
         </div>
       {% endfor %}
     </div>
@@ -53,4 +54,22 @@
       <p>No sessions scheduled yet.</p>
     </div>
   {% endif %}
+
+  <script>
+    async function checkSeats(sessionId) {
+      const el = document.getElementById(`seat-${sessionId}`);
+      el.textContent = " (checking...)";
+
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/availability/`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        el.textContent = ` • Taken: ${data.taken}, Available: ${data.available}`;
+      } catch (e) {
+        el.textContent = " (failed to load)";
+      }
+    }
+  </script>
+
+
 {% endblock %}
