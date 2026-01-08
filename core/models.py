@@ -2,6 +2,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+import uuid
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -108,3 +109,53 @@ class Payment(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.registration.email} — {self.amount} — {self.status}"
+    
+
+class WebhookEndpoint(TimeStampedModel):
+    """
+    Represents a low-code automation endpoint (Zapier/Make/n8n/custom).
+    """
+    name = models.CharField(max_length=120)
+    url = models.URLField()
+    is_active = models.BooleanField(default=True)
+
+    # list of event types this endpoint wants, e.g. ["registration.created", "payment.paid"]
+    subscribed_events = models.JSONField(default=list, blank=True)
+
+    # optional per-endpoint signing secret (recommended)
+    signing_secret = models.CharField(max_length=200, blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.name} ({'active' if self.is_active else 'inactive'})"
+
+
+class OutboxEvent(TimeStampedModel):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        DELIVERED = "DELIVERED", "Delivered"
+        RETRY = "RETRY", "Retry"
+        FAILED = "FAILED", "Failed"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    endpoint = models.ForeignKey(WebhookEndpoint, on_delete=models.CASCADE, related_name="outbox_events")
+    event_type = models.CharField(max_length=100)
+    payload = models.JSONField()
+
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+
+    next_attempt_at = models.DateTimeField(default=timezone.now)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+
+    last_error = models.TextField(blank=True)
+    last_status_code = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status", "next_attempt_at"]),
+            models.Index(fields=["event_type"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.event_type} -> {self.endpoint.name} [{self.status}]"

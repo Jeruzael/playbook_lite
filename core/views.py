@@ -1,9 +1,11 @@
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
+import json
 
+from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 
 from .forms import RegistrationCreateForm
 from .models import Session, Registration, Payment
@@ -116,3 +118,11 @@ def payment_success(request: HttpRequest, payment_id: int) -> HttpResponse:
         id=payment_id,
     )
     return render(request, "core/payment_success.html", {"payment": payment})
+
+
+@csrf_exempt
+def webhook_receiver(request):
+    body = request.body.decode("utf-8") if request.body else ""
+    # For now: just print (you'll see it in the runserver console)
+    print("WEBHOOK RECEIVED:", request.headers.get("X-Event-Type"), body[:500])
+    return JsonResponse({"ok": True})

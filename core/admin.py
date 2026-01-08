@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Organization, Program, Session, Registration, Payment
+from .models import Organization, Program, Session, Registration, Payment, WebhookEndpoint, OutboxEvent
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
@@ -37,4 +37,17 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ("status", "provider")
     search_fields = ("registration__email", "reference")
     autocomplete_fields = ("registration",)
-# Register your models here.
+
+
+@admin.register(WebhookEndpoint)
+class WebhookEndpointAdmin(admin.ModelAdmin):
+    list_display = ("name", "url", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "url")
+
+
+@admin.register(OutboxEvent)
+class OutboxEventAdmin(admin.ModelAdmin):
+    list_display = ("event_type", "endpoint", "status", "attempts", "next_attempt_at", "last_status_code", "created_at")
+    list_filter = ("status", "event_type", "endpoint")
+    search_fields = ("event_type", "endpoint__name", "endpoint__url")

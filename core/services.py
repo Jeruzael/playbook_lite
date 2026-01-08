@@ -2,6 +2,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from decimal import Decimal
+from core.webhooks import enqueue_event
 
 from .models import Session, Registration, Payment
 
@@ -46,6 +47,19 @@ def create_registration(*, session: Session, full_name: str, email: str) -> Regi
             email=email_norm,
             status=Registration.Status.PENDING,
         )
+
+        transaction.on_commit(lambda: enqueue_event(
+            "registration.created",
+            {
+                "registration_id": reg.id,
+                "session_id": reg.session_id,
+                "full_name": reg.full_name,
+                "email": reg.email,
+                "status": reg.status,
+            }
+        ))
+
+
         return reg
 
 class PaymentError(Exception):
