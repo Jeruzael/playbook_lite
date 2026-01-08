@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Programs — Playbook Lite{% endblock %}
+
+{% block content %}
+  <h1>Programs</h1>
+  <p class="muted">Browse active programs and view their scheduled sessions.</p>
+
+  {% if programs %}
+    <div class="grid">
+      {% for program in programs %}
+        <div class="card">
+          <div class="muted">{{ program.organization.name }}</div>
+          <h3 style="margin: 8px 0;">{{ program.name }}</h3>
+          {% if program.description %}
+            <p class="muted" style="margin: 0 0 12px 0;">{{ program.description|truncatechars:120 }}</p>
+          {% endif %}
+          <a class="btn" href="{% url 'core:program_detail' program.id %}">View sessions</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card">
+      <p>No active programs yet. Add one in the admin.</p>
+    </div>
+  {% endif %}
+{% endblock %}

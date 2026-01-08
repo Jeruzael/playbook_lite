@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Registration — Playbook Lite{% endblock %}
+
+{% block content %}
+  <h1>Registration saved</h1>
+
+  <div class="card" style="margin-top: 12px;">
+    <p style="margin:0;"><strong>{{ reg.full_name }}</strong></p>
+    <p class="muted" style="margin:6px 0 0 0;">{{ reg.email }}</p>
+
+    <div class="divider"></div>
+
+    <p style="margin:0;">
+      <strong>{{ reg.session.program.name }}</strong><br />
+      <span class="muted">{{ reg.session.start_at|date:"M d, Y" }} {{ reg.session.start_at|time:"H:i" }}</span>
+    </p>
+
+    <div style="margin-top: 12px;">
+      <span class="pill ok">{{ reg.status }}</span>
+    </div>
+
+    {% if reg.status == "PENDING" %}
+      <a class="btn" href="{% url 'core:pay' reg.id %}">Pay</a>
+    {% endif %}
+
+    <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn" href="{% url 'core:program_detail' reg.session.program.id %}">Back to program</a>
+
+      {% if reg.status == "PENDING" %}
+        <form method="post" action="{% url 'core:cancel_registration' reg.id %}">
+          {% csrf_token %}
+          <button class="btn" type="submit">Cancel</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

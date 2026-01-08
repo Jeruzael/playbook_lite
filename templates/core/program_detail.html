@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ program.name }} — Playbook Lite{% endblock %}
+
+{% block content %}
+  <a class="btn" href="/">← Back</a>
+
+  <h1 style="margin-top: 16px;">{{ program.name }}</h1>
+  <p class="muted" style="margin-top: 4px;">
+    {{ program.organization.name }}
+    {% if program.description %}• {{ program.description }}{% endif %}
+  </p>
+
+  <h2 style="margin-top: 18px;">Sessions</h2>
+
+  {% if sessions %}
+    <div class="grid">
+      {% for s in sessions %}
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <strong>{{ s.start_at|date:"M d, Y" }} • {{ s.start_at|time:"H:i" }}</strong>
+
+            {% if s.start_at > now %}
+              <span class="pill ok">Upcoming</span>
+            {% else %}
+              <span class="pill soon">Past</span>
+            {% endif %}
+          </div>
+
+          <div class="muted" style="margin-top: 6px;">
+            Ends {{ s.end_at|time:"H:i" }}
+            {% if s.location %}• {{ s.location }}{% endif %}
+          </div>
+
+          <div class="muted" style="margin-top: 10px;">
+            Capacity: {{ s.capacity }}
+          </div>
+
+          <!-- Registration button comes in Phase 3 -->
+          <div style="margin-top: 12px;">
+            {% if s.start_at > now %}
+            <a class="btn" href="{% url 'core:register_for_session' s.id %}">Register</a>
+            {% else %}
+            <span class="btn" style="opacity:0.7; cursor:not-allowed;">Registration closed</span>
+            {% endif %}
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card">
+      <p>No sessions scheduled yet.</p>
+    </div>
+  {% endif %}
+{% endblock %}

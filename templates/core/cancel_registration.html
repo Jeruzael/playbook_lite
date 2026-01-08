@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Cancel — Playbook Lite{% endblock %}
+
+{% block content %}
+  <h1>Cancel registration?</h1>
+  <div class="card" style="margin-top: 12px;">
+    <p style="margin:0;"><strong>{{ reg.full_name }}</strong> — {{ reg.email }}</p>
+    <p class="muted" style="margin:6px 0 0 0;">
+      {{ reg.session.program.name }} • {{ reg.session.start_at|date:"M d, Y" }} {{ reg.session.start_at|time:"H:i" }}
+    </p>
+
+    <div style="margin-top: 14px; display:flex; gap:10px;">
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn" type="submit">Yes, cancel</button>
+      </form>
+      <a class="btn" href="{% url 'core:registration_success' reg.id %}">No, go back</a>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Payment error — Playbook Lite{% endblock %}
+
+{% block content %}
+  <h1>Payment failed</h1>
+
+  <div class="card" style="margin-top: 12px;">
+    <p>{{ error }}</p>
+    <a class="btn" href="{% url 'core:registration_success' reg.id %}">Back</a>
+  </div>
+{% endblock %}
