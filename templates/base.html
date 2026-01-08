@@ -28,6 +28,53 @@
       .pill.ok { background: rgba(0,255,160,0.14); border: 1px solid rgba(0,255,160,0.25); }
       .pill.soon { background: rgba(255,200,0,0.14); border: 1px solid rgba(255,200,0,0.25); }
       .divider { height: 1px; background: rgba(255,255,255,0.10); margin: 16px 0; }
+
+      .modal-backdrop {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        z-index: 1000;
+      }
+      .modal {
+        width: 100%;
+        max-width: 520px;
+        background: rgba(15, 20, 40, 0.96);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 16px;
+        padding: 16px;
+      }
+      .modal-header {
+        display:flex; justify-content:space-between; align-items:center; gap:12px;
+        margin-bottom: 10px;
+      }
+      .field {
+        display:grid;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      input {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.06);
+        color: #e8eefc;
+        outline: none;
+      }
+      input:focus { border-color: rgba(255,255,255,0.35); }
+      .error-box {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255, 80, 80, 0.12);
+        border: 1px solid rgba(255, 80, 80, 0.25);
+        display:none;
+      }
+      .row {
+        display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px;
+      }
     </style>
   </head>
   <body>

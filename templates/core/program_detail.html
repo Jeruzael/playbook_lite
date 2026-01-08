@@ -39,10 +39,14 @@
 
           <div style="margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap;">
             {% if s.start_at > now %}
-              <a class="btn" href="{% url 'core:register_for_session' s.id %}">Register</a>
+              <button class="btn" type="button"
+                      onclick="openRegisterModal({{ s.id }}, '{{ program.name|escapejs }}', '{{ s.start_at|date:'M d, Y' }} {{ s.start_at|time:'H:i' }}')">
+                Register
+              </button>
             {% else %}
               <span class="btn" style="opacity:0.7; cursor:not-allowed;">Registration closed</span>
             {% endif %}
+
 
             <button class="btn" type="button" onclick="checkSeats({{ s.id }})">Check seats</button>
           </div>
@@ -55,7 +59,44 @@
     </div>
   {% endif %}
 
+  <div id="register-backdrop" class="modal-backdrop" onclick="closeRegisterModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <strong id="reg-title">Register</strong><br />
+          <span class="muted" id="reg-subtitle"></span>
+        </div>
+        <button class="btn" type="button" onclick="closeRegisterModal()">✕</button>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label class="muted">Full name</label>
+          <input id="reg-full-name" type="text" autocomplete="name" />
+        </div>
+
+        <div class="field">
+          <label class="muted">Email</label>
+          <input id="reg-email" type="email" autocomplete="email" />
+        </div>
+
+        <div id="reg-error" class="error-box"></div>
+
+        <div class="row">
+          <button id="reg-submit" class="btn" type="button" onclick="submitRegistration()">Submit</button>
+          <button class="btn" type="button" onclick="closeRegisterModal()">Cancel</button>
+        </div>
+
+        <p class="muted" style="margin-top:10px;">
+          Uses the REST API: <code>/api/registrations/</code>
+        </p>
+      </div>
+    </div>
+  </div>
+
   <script>
+    let currentSessionId = null;
+
     async function checkSeats(sessionId) {
       const el = document.getElementById(`seat-${sessionId}`);
       el.textContent = " (checking...)";
@@ -69,7 +110,102 @@
         el.textContent = " (failed to load)";
       }
     }
-  </script>
 
+    function openRegisterModal(sessionId, programName, sessionLabel) {
+      currentSessionId = sessionId;
+
+      document.getElementById("reg-title").textContent = `Register`;
+      document.getElementById("reg-subtitle").textContent = `${programName} • ${sessionLabel}`;
+
+      document.getElementById("reg-full-name").value = "";
+      document.getElementById("reg-email").value = "";
+
+      hideRegError();
+      setRegLoading(false);
+
+      document.getElementById("register-backdrop").style.display = "flex";
+      document.getElementById("reg-full-name").focus();
+    }
+
+    function closeRegisterModal() {
+      document.getElementById("register-backdrop").style.display = "none";
+      currentSessionId = null;
+    }
+
+    function showRegError(msg) {
+      const el = document.getElementById("reg-error");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    function hideRegError() {
+      const el = document.getElementById("reg-error");
+      el.textContent = "";
+      el.style.display = "none";
+    }
+
+    function setRegLoading(isLoading) {
+      const btn = document.getElementById("reg-submit");
+      btn.disabled = isLoading;
+      btn.textContent = isLoading ? "Submitting..." : "Submit";
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    async function submitRegistration() {
+      hideRegError();
+
+      if (!currentSessionId) {
+        showRegError("No session selected.");
+        return;
+      }
+
+      const fullName = document.getElementById("reg-full-name").value.trim();
+      const email = document.getElementById("reg-email").value.trim().toLowerCase();
+
+      if (!fullName) { showRegError("Full name is required."); return; }
+      if (!email) { showRegError("Email is required."); return; }
+
+      setRegLoading(true);
+
+      try {
+        const csrftoken = getCookie("csrftoken");
+
+        const res = await fetch("/api/registrations/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken || "",
+          },
+          body: JSON.stringify({
+            session_id: currentSessionId,
+            full_name: fullName,
+            email: email
+          }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          // Our API returns {"detail": "..."} on errors.
+          const msg = data.detail || "Registration failed.";
+          showRegError(msg);
+          setRegLoading(false);
+          return;
+        }
+
+        // Success: redirect to the existing server-rendered success page
+        window.location.href = `/registrations/${data.id}/success/`;
+      } catch (e) {
+        showRegError("Network error. Please try again.");
+        setRegLoading(false);
+      }
+    }
+  </script>
 
 {% endblock %}
